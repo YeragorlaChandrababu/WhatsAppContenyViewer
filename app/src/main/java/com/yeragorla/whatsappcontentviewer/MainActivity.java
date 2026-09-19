@@ -8,6 +8,8 @@ import android.os.*;
 import android.provider.Settings;
 import android.view.*;
 import android.widget.*;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.graphics.Typeface;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
@@ -32,6 +34,9 @@ public class MainActivity extends AppCompatActivity {
     private boolean pickingDualStorage = false;
     private String storageLabel = "Internal Storage";
     private boolean dualProfileMode = false;
+    private String searchQuery = "";
+    private int sortMode = 0; // 0 name, 1 modified, 2 size
+    private boolean sortDescending = false;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -45,10 +50,26 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.internalStorage).setOnClickListener(v -> openInternal());
         findViewById(R.id.dualStorage).setOnClickListener(v -> openDualApps());
         findViewById(R.id.addStorage).setOnClickListener(v -> pickStorage("Select a storage location"));
-        findViewById(R.id.themeButton).setOnClickListener(v -> showThemeChooser());
+        findViewById(R.id.moreButton).setOnClickListener(v -> showMoreMenu(v));
         findViewById(R.id.newFolder).setOnClickListener(v -> createFolder());
         findViewById(R.id.newFile).setOnClickListener(v -> createFile());
         findViewById(R.id.pasteButton).setOnClickListener(v -> pasteClipboard());
+
+        EditText search=findViewById(R.id.searchBox);
+        search.addTextChangedListener(new TextWatcher() {
+            public void beforeTextChanged(CharSequence s,int st,int c,int a) {}
+            public void onTextChanged(CharSequence s,int st,int before,int count) {
+                searchQuery=s.toString().trim().toLowerCase(Locale.US);
+                renderList();
+            }
+            public void afterTextChanged(Editable e) {}
+        });
+
+        findViewById(R.id.catImages).setOnClickListener(v -> openCategory(Environment.DIRECTORY_PICTURES));
+        findViewById(R.id.catVideos).setOnClickListener(v -> openCategory(Environment.DIRECTORY_DCIM));
+        findViewById(R.id.catAudio).setOnClickListener(v -> openCategory(Environment.DIRECTORY_MUSIC));
+        findViewById(R.id.catDocuments).setOnClickListener(v -> openCategory(Environment.DIRECTORY_DOCUMENTS));
+        updateStorageSummary();
         fileList.setOnItemClickListener((p,v,pos,id) -> openItem(items.get(pos)));
         fileList.setOnItemLongClickListener((p,v,pos,id) -> { showActions(items.get(pos)); return true; });
 
@@ -202,7 +223,21 @@ public class MainActivity extends AppCompatActivity {
             pathText.setText(storageLabel + "  •  " + currentFileDir.getAbsolutePath());
         }
         renderBreadcrumbs();
-        ArrayAdapter<Item> adapter=new ArrayAdapter<Item>(this,0,items) {
+        renderList();
+    }
+
+    private void renderList() {
+        ArrayList<Item> visible=new ArrayList<>();
+        for(Item it:items) if(searchQuery.isEmpty() || it.name().toLowerCase(Locale.US).contains(searchQuery)) visible.add(it);
+        Collections.sort(visible,(a,b)->{
+            if(a.isDir()!=b.isDir()) return a.isDir()?-1:1;
+            int c;
+            if(sortMode==1) c=Long.compare(lastModified(b),lastModified(a));
+            else if(sortMode==2) c=Long.compare(b.length(),a.length());
+            else c=a.name().compareToIgnoreCase(b.name());
+            return sortDescending?-c:c;
+        });
+        ArrayAdapter<Item> adapter=new ArrayAdapter<Item>(this,0,visible) {
             @Override public View getView(int position,View convert,android.view.ViewGroup parent) {
                 View row=convert;
                 if(row==null) row=getLayoutInflater().inflate(R.layout.item_file,parent,false);
