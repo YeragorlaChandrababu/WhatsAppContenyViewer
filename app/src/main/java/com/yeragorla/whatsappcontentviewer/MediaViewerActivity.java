@@ -171,12 +171,28 @@ public class MediaViewerActivity extends AppCompatActivity {
         int vw=player.getVideoWidth(), vh=player.getVideoHeight();
         int tw=video.getWidth(), th=video.getHeight();
         if(vw<=0 || vh<=0 || tw<=0 || th<=0) return;
-        // Fit the video's natural aspect ratio inside the available viewer area.
-        // Rotation changes orientation, but never stretches the original frame.
-        float scale=Math.min((float)tw/vw,(float)th/vh);
-        float cw=vw*scale, ch=vh*scale;
+
+        // TextureView fills the available surface by default. Correct that
+        // fill to the video's natural aspect ratio, then rotate the rendered
+        // content. This keeps the video as large as possible without stretching.
+        boolean quarterTurn=((int)mediaRotation % 180)!=0;
+        float videoAspect=quarterTurn
+                ? (float)vh / (float)vw
+                : (float)vw / (float)vh;
+        float viewAspect=(float)tw / (float)th;
+
+        float scaleX=1f;
+        float scaleY=1f;
+        if(videoAspect > viewAspect) {
+            // Video is relatively wider: reduce its displayed height.
+            scaleY=viewAspect / videoAspect;
+        } else {
+            // Video is relatively taller: reduce its displayed width.
+            scaleX=videoAspect / viewAspect;
+        }
+
         Matrix m=new Matrix();
-        m.setScale(scale, scale, tw / 2f, th / 2f);
+        m.setScale(scaleX, scaleY, tw / 2f, th / 2f);
         m.postRotate(mediaRotation, tw / 2f, th / 2f);
         video.setTransform(m);
     }
@@ -277,7 +293,12 @@ public class MediaViewerActivity extends AppCompatActivity {
     }
 
     @Override public void onBackPressed() {
-        if(mediaRotation!=0f) { mediaRotation=0f; image.setRotation(0f); video.setRotation(0f); return; }
+        if(mediaRotation!=0f) {
+            mediaRotation=0f;
+            image.setRotation(0f);
+            if(video.isAvailable()) applyVideoTransform();
+            return;
+        }
         super.onBackPressed();
     }
 
