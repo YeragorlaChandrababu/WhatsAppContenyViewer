@@ -9,7 +9,8 @@ import android.provider.Settings;
 import android.view.*;
 import android.widget.*;
 import android.graphics.Typeface;
-import androidx.appcompat.app.AppCompatActivity;\nimport androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.FileProvider;
 import androidx.documentfile.provider.DocumentFile;
 import java.io.*;
@@ -34,14 +35,17 @@ public class MainActivity extends AppCompatActivity {
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
-        String savedTheme = getSharedPreferences("settings", MODE_PRIVATE).getString("theme", "system");\n        applyTheme(savedTheme);\n        setContentView(R.layout.activity_main);
+        String savedTheme = getSharedPreferences("settings", MODE_PRIVATE).getString("theme", "system");
+        applyTheme(savedTheme);
+        setContentView(R.layout.activity_main);
         breadcrumbs = findViewById(R.id.breadcrumbs);
         pathText = findViewById(R.id.pathText);
         fileList = findViewById(R.id.fileList);
 
         findViewById(R.id.internalStorage).setOnClickListener(v -> openInternal());
         findViewById(R.id.dualStorage).setOnClickListener(v -> openDualApps());
-        findViewById(R.id.addStorage).setOnClickListener(v -> pickStorage("Select a storage location"));\n        findViewById(R.id.themeButton).setOnClickListener(v -> showThemeChooser());
+        findViewById(R.id.addStorage).setOnClickListener(v -> pickStorage("Select a storage location"));
+        findViewById(R.id.themeButton).setOnClickListener(v -> showThemeChooser());
         findViewById(R.id.newFolder).setOnClickListener(v -> createFolder());
         findViewById(R.id.newFile).setOnClickListener(v -> createFile());
         findViewById(R.id.pasteButton).setOnClickListener(v -> pasteClipboard());
@@ -56,7 +60,25 @@ public class MainActivity extends AppCompatActivity {
         super.onNewIntent(intent); setIntent(intent); handleShareIntent(intent);
     }
 
-    private void showThemeChooser() {\n        String saved = getSharedPreferences("settings", MODE_PRIVATE).getString("theme", "system");\n        String[] labels = {"System default", "Light", "Dark"};\n        String[] values = {"system", "light", "dark"};\n        int checked = 0;\n        for (int i=0;i<values.length;i++) if(values[i].equals(saved)) checked=i;\n        new AlertDialog.Builder(this).setTitle("Theme").setSingleChoiceItems(labels, checked, (d, which) -> {\n            getSharedPreferences("settings", MODE_PRIVATE).edit().putString("theme", values[which]).apply();\n            applyTheme(values[which]); d.dismiss();\n        }).show();\n    }\n\n    private void applyTheme(String theme) {\n        if ("dark".equals(theme)) AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);\n        else if ("light".equals(theme)) AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);\n        else AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);\n    }\n\n    private void handleShareIntent(Intent intent) {
+    private void showThemeChooser() {
+        String saved = getSharedPreferences("settings", MODE_PRIVATE).getString("theme", "system");
+        String[] labels = {"System default", "Light", "Dark"};
+        String[] values = {"system", "light", "dark"};
+        int checked = 0;
+        for (int i=0;i<values.length;i++) if(values[i].equals(saved)) checked=i;
+        new AlertDialog.Builder(this).setTitle("Theme").setSingleChoiceItems(labels, checked, (d, which) -> {
+            getSharedPreferences("settings", MODE_PRIVATE).edit().putString("theme", values[which]).apply();
+            applyTheme(values[which]); d.dismiss();
+        }).show();
+    }
+
+    private void applyTheme(String theme) {
+        if ("dark".equals(theme)) AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        else if ("light".equals(theme)) AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        else AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+    }
+
+    private void handleShareIntent(Intent intent) {
         if (!Intent.ACTION_SEND.equals(intent.getAction())) return;
         Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
         if (uri == null) return;
