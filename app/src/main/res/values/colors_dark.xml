@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="surface">#101116</color>
+    <color name="surfaceVariant">#1B1C22</color>
+    <color name="textPrimary">#F5F5F7</color>
+    <color name="textSecondary">#A8A9B3</color>
+    <color name="divider">#30313A</color>
+</resources>
