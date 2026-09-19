@@ -84,7 +84,7 @@ public class MediaViewerActivity extends AppCompatActivity {
 
         if(mime.startsWith("image/")) {
             image.setVisibility(View.VISIBLE);
-            image.setImageURI(uri);
+            try { image.setImageURI(uri); } catch (RuntimeException e) { notifyUser("Could not load image"); }
         } else if(mime.startsWith("video/")) {
             video.setVisibility(View.VISIBLE);
             video.setMediaController(new MediaController(this));
@@ -125,8 +125,13 @@ public class MediaViewerActivity extends AppCompatActivity {
         if(pdfRenderer==null || pageIndex<0 || pageIndex>=pdfRenderer.getPageCount()) return;
         if(pdfPageRenderer!=null) pdfPageRenderer.close();
         pdfPageRenderer=pdfRenderer.openPage(pageIndex);
-        Bitmap bitmap=Bitmap.createBitmap(pdfPageRenderer.getWidth(),pdfPageRenderer.getHeight(),Bitmap.Config.ARGB_8888);
-        pdfPageRenderer.render(bitmap,null,null,PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+        int w=pdfPageRenderer.getWidth(), h=pdfPageRenderer.getHeight();
+        float scale=Math.min(1f,Math.min(2048f/w,2048f/h));
+        w=Math.max(1,Math.round(w*scale)); h=Math.max(1,Math.round(h*scale));
+        Bitmap bitmap=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);
+        android.graphics.Matrix matrix=new android.graphics.Matrix();
+        matrix.setScale(scale,scale);
+        pdfPageRenderer.render(bitmap,null,matrix,PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
         pdfPage.setImageBitmap(bitmap);
         pageText.setText((pageIndex+1)+" / "+pdfRenderer.getPageCount());
         pageText.setVisibility(pdfRenderer.getPageCount()>1?View.VISIBLE:View.GONE);
