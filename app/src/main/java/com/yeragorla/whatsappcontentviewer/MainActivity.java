@@ -50,7 +50,6 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.internalStorage).setOnClickListener(v -> openInternal());
         findViewById(R.id.dualStorage).setOnClickListener(v -> openDualApps());
         findViewById(R.id.addStorage).setOnClickListener(v -> pickStorage("Select a storage location"));
-        findViewById(R.id.themeButton).setOnClickListener(v -> showThemeChooser());
         findViewById(R.id.moreButton).setOnClickListener(v -> showMoreMenu(v));
         findViewById(R.id.newFolder).setOnClickListener(v -> createFolder());
         findViewById(R.id.newFile).setOnClickListener(v -> createFile());
