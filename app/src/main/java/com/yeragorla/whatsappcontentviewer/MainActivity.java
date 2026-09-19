@@ -256,15 +256,9 @@ public class MainActivity extends AppCompatActivity {
                 String detected = getContentResolver().getType(u);
                 if (detected != null) mime = detected;
             }
-            if (mime == null) mime = "*/*";
-            if (mime.startsWith("image/") || mime.startsWith("video/") || mime.startsWith("audio/")) {
-                Intent viewer = new Intent(this, MediaViewerActivity.class);
-                viewer.putExtra("media_uri", u);
-                viewer.putExtra("media_mime", mime);
-                viewer.putExtra("media_name", it.name());
-                viewer.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                viewer.setClipData(ClipData.newRawUri("media", u));
-                startActivity(viewer);
+            if (mime == null) mime = guessMime(it.name());
+            if (mime.startsWith("image/") || mime.startsWith("video/") || mime.startsWith("audio/") || mime.equals("application/pdf")) {
+                openInMediaViewer(it, u, mime);
             } else {
                 Intent i=new Intent(Intent.ACTION_VIEW,u);
                 i.setDataAndType(u,mime);
@@ -275,6 +269,36 @@ public class MainActivity extends AppCompatActivity {
         } catch(Exception e) { toast("No compatible app can open this file"); }
     }
 
+    private void openInMediaViewer(Item selected, Uri selectedUri, String selectedMime) {
+        ArrayList<Uri> uris = new ArrayList<>();
+        ArrayList<String> names = new ArrayList<>();
+        ArrayList<String> mimes = new ArrayList<>();
+        int selectedIndex = 0;
+        for (Item candidate : items) {
+            if (candidate.isDir()) continue;
+            Uri u = documentMode ? candidate.doc.getUri() :
+                    FileProvider.getUriForFile(this, getPackageName()+".fileprovider", candidate.file);
+            String m = documentMode ? getContentResolver().getType(u) : guessMime(candidate.name());
+            if (m == null || m.equals("*/*")) {
+                String detected = getContentResolver().getType(u);
+                if (detected != null) m = detected;
+            }
+            if (m == null) m = guessMime(candidate.name());
+            if (m.startsWith("image/") || m.startsWith("video/") || m.startsWith("audio/") || m.equals("application/pdf")) {
+                if (candidate == selected) selectedIndex = uris.size();
+                uris.add(u); names.add(candidate.name()); mimes.add(m);
+            }
+        }
+        Intent viewer = new Intent(this, MediaViewerActivity.class);
+        viewer.putParcelableArrayListExtra("media_uris", uris);
+        viewer.putStringArrayListExtra("media_names", names);
+        viewer.putStringArrayListExtra("media_mimes", mimes);
+        viewer.putExtra("media_index", selectedIndex);
+        viewer.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        if (selectedUri != null) viewer.setClipData(ClipData.newRawUri("media", selectedUri));
+        startActivity(viewer);
+    }
+
     private void openDualFileWithProvider(File source, boolean share) {
         new Thread(() -> {
             try {
@@ -283,7 +307,7 @@ public class MainActivity extends AppCompatActivity {
                 String safe = source.getName().replaceAll("[^A-Za-z0-9._-]", "_");
                 File cached = new File(dir, System.currentTimeMillis() + "_" + safe);
                 copyFile(source, cached);
-                Uri u = Uri.fromFile(cached);
+                Uri u = FileProvider.getUriForFile(this, getPackageName()+".fileprovider", cached);
                 runOnUiThread(() -> {
                     Intent i;
                     if (share) {
@@ -296,7 +320,13 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         String mime = guessMime(source.getName());
                         Intent viewer = new Intent(this, MediaViewerActivity.class);
-                        viewer.putExtra("media_uri", u); viewer.putExtra("media_mime", mime); viewer.putExtra("media_name", source.getName());
+                        ArrayList<Uri> oneUri = new ArrayList<>(); oneUri.add(u);
+                        ArrayList<String> oneName = new ArrayList<>(); oneName.add(source.getName());
+                        ArrayList<String> oneMime = new ArrayList<>(); oneMime.add(mime);
+                        viewer.putParcelableArrayListExtra("media_uris", oneUri);
+                        viewer.putStringArrayListExtra("media_names", oneName);
+                        viewer.putStringArrayListExtra("media_mimes", oneMime);
+                        viewer.putExtra("media_index", 0);
                         viewer.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); viewer.setClipData(ClipData.newRawUri("media", u));
                         try { startActivity(viewer); } catch(Exception e) { toast("Could not open media"); }
                     }
