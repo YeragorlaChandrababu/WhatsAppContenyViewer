@@ -3,6 +3,8 @@ package com.yeragorla.whatsappcontentviewer;
 import android.app.AlertDialog;
 import android.content.*;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
+import android.graphics.SurfaceTexture;
 import android.graphics.BitmapFactory;
 import android.graphics.pdf.PdfRenderer;
 import android.media.MediaPlayer;
@@ -48,6 +50,19 @@ public class MediaViewerActivity extends AppCompatActivity {
         pageText=findViewById(R.id.pageText);
         titleText=findViewById(R.id.titleText);
         countText=findViewById(R.id.countText);
+
+        video.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+            @Override public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+                if (mime != null && mime.startsWith("video/") && uri != null) {
+                    prepareVideo(new Surface(surface));
+                }
+            }
+            @Override public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+                applyVideoTransform();
+            }
+            @Override public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) { return true; }
+            @Override public void onSurfaceTextureUpdated(SurfaceTexture surface) {}
+        });
 
         ArrayList<Uri> incoming=getIntent().getParcelableArrayListExtra("media_uris");
         if(incoming!=null) uris=incoming;
