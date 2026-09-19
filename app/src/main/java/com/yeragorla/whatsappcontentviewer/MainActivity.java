@@ -27,6 +27,8 @@ public class MainActivity extends AppCompatActivity {
     private File clipboardFile;
     private DocumentFile clipboardDoc;
     private boolean clipboardCut = false;
+    private boolean pickingDualStorage = false;
+    private String storageLabel = "Internal Storage";
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -36,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
         fileList = findViewById(R.id.fileList);
 
         findViewById(R.id.internalStorage).setOnClickListener(v -> openInternal());
-        findViewById(R.id.dualStorage).setOnClickListener(v -> pickStorage("Select Storage for dual apps or another storage location"));
+        findViewById(R.id.dualStorage).setOnClickListener(v -> openDualApps());
         findViewById(R.id.addStorage).setOnClickListener(v -> pickStorage("Select a storage location"));
         findViewById(R.id.newFolder).setOnClickListener(v -> createFolder());
         findViewById(R.id.newFile).setOnClickListener(v -> createFile());
@@ -75,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void openInternal() {
         documentMode = false; documentRootUri = null;
+        storageLabel = "Internal Storage";
         currentFileDir = Environment.getExternalStorageDirectory();
         currentDocDir = null;
         refresh();
@@ -88,6 +91,42 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }).setNegativeButton("Later", null).show();
         }
+    }
+
+    private void openDualApps() {
+        // Dual Apps is commonly exposed by Android as user/profile 999 on Xiaomi/Redmi/POCO.
+        // Never create or assume the path: verify that the profile is actually mounted and readable.
+        File dualRoot = new File(Environment.getExternalStorageDirectory().getParentFile(), "999");
+        if (dualRoot.isDirectory() && dualRoot.canRead()) {
+            File[] probe = dualRoot.listFiles();
+            if (probe != null) {
+                documentMode = false;
+                documentRootUri = null;
+                currentFileDir = dualRoot;
+                currentDocDir = null;
+                storageLabel = "Dual Apps (user 999)";
+                refresh();
+                return;
+            }
+        }
+
+        // Some Android/OEM builds isolate user 999 from normal filesystem APIs.
+        // In that case let Android grant access through the Storage Access Framework.
+        String saved = getSharedPreferences("storage", MODE_PRIVATE).getString("dual_tree_uri", null);
+        if (saved != null) {
+            try {
+                Uri u = Uri.parse(saved);
+                int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+                getContentResolver().takePersistableUriPermission(u, takeFlags);
+                DocumentFile root = DocumentFile.fromTreeUri(this, u);
+                if (root != null && root.canRead()) {
+                    documentMode = true; documentRootUri = u; currentDocDir = root; currentFileDir = null;
+                    storageLabel = "Dual Apps"; refresh(); return;
+                }
+            } catch (Exception ignored) {}
+        }
+        pickingDualStorage = true;
+        pickStorage("Select \"Storage for dual apps\"");
     }
 
     private void pickStorage(String title) {
@@ -104,6 +143,13 @@ public class MainActivity extends AppCompatActivity {
             try { getContentResolver().takePersistableUriPermission(u, data.getFlags() &
                     (Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION)); } catch(Exception ignored){}
             documentMode=true; documentRootUri=u; currentDocDir=DocumentFile.fromTreeUri(this,u); currentFileDir=null;
+            if (pickingDualStorage) {
+                getSharedPreferences("storage", MODE_PRIVATE).edit().putString("dual_tree_uri", u.toString()).apply();
+                storageLabel = "Dual Apps";
+            } else {
+                storageLabel = "Selected Storage";
+            }
+            pickingDualStorage = false;
             refresh();
         }
     }
@@ -116,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
                 Arrays.sort(fs,(a,b) -> Boolean.compare(!a.isDirectory(),!b.isDirectory()) != 0
                         ? Boolean.compare(!a.isDirectory(),!b.isDirectory()) : a.getName().compareToIgnoreCase(b.getName()));
                 for(DocumentFile f:fs) items.add(Item.doc(f));
-                pathText.setText(currentDocDir.getUri().toString());
+                pathText.setText(storageLabel + "  •  " + currentDocDir.getUri().toString());
             }
         } else if(currentFileDir != null) {
             File[] fs=currentFileDir.listFiles();
@@ -125,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
                         a.getName().compareToIgnoreCase(b.getName()));
                 for(File f:fs) items.add(Item.file(f));
             }
-            pathText.setText(currentFileDir.getAbsolutePath());
+            pathText.setText(storageLabel + "  •  " + currentFileDir.getAbsolutePath());
         }
         renderBreadcrumbs();
         ArrayAdapter<Item> adapter=new ArrayAdapter<Item>(this,android.R.layout.simple_list_item_1,items) {
@@ -147,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
         home.setOnClickListener(v -> openInternal());
         breadcrumbs.addView(home);
         if(documentMode) {
-            TextView d=crumb("  /  Storage");
+            TextView d=crumb("  /  " + storageLabel);
             d.setOnClickListener(v -> { currentDocDir=DocumentFile.fromTreeUri(this,documentRootUri); refresh(); });
             breadcrumbs.addView(d);
         } else if(currentFileDir!=null) {
