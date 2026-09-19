@@ -6,7 +6,7 @@
     <FrameLayout android:id="@+id/swipeSurface" android:layout_width="match_parent" android:layout_height="match_parent">
         <ImageView android:id="@+id/imageView" android:layout_width="match_parent" android:layout_height="match_parent"
             android:scaleType="fitCenter" android:visibility="gone" android:contentDescription="Media preview"/>
-        <VideoView android:id="@+id/videoView" android:layout_width="match_parent" android:layout_height="match_parent"
+        <TextureView android:id="@+id/videoView" android:layout_width="match_parent" android:layout_height="match_parent"
             android:layout_gravity="center" android:visibility="gone"/>
         <LinearLayout android:id="@+id/audioPanel" android:layout_width="match_parent" android:layout_height="match_parent"
             android:gravity="center" android:orientation="vertical" android:visibility="gone">
