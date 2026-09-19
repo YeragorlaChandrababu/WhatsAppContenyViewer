@@ -25,7 +25,7 @@ public class MediaViewerActivity extends AppCompatActivity {
     private String mime;
     private String name;
     private MediaPlayer player;
-    private VideoView video;
+    private TextureView video;
     private ImageView image;
     private LinearLayout audioPanel, pdfPanel;
     private ImageView pdfPage;
@@ -85,6 +85,8 @@ public class MediaViewerActivity extends AppCompatActivity {
         titleText.setText(name);
         countText.setText((index + 1) + " / " + uris.size());
         mediaRotation=0f;
+        image.setRotation(0f);
+        video.setRotation(0f);
         image.setVisibility(View.GONE); video.setVisibility(View.GONE); audioPanel.setVisibility(View.GONE); pdfPanel.setVisibility(View.GONE);
 
         try {
@@ -93,14 +95,7 @@ public class MediaViewerActivity extends AppCompatActivity {
                 try { image.setImageURI(uri); } catch (RuntimeException e) { notifyUser("Could not load image"); }
             } else if(mime.startsWith("video/")) {
                 video.setVisibility(View.VISIBLE);
-                video.setMediaController(new MediaController(this));
-                video.setOnPreparedListener(mp->{
-                    centerVideo(mp.getVideoWidth(), mp.getVideoHeight());
-                    video.start();
-                });
-                video.setOnErrorListener((mp, what, extra)->{ notifyUser("Could not play this video"); return true; });
-                video.setVideoURI(uri);
-                video.requestFocus();
+                if(video.isAvailable()) prepareVideo(new Surface(video.getSurfaceTexture()));
             } else if(mime.startsWith("audio/")) {
                 audioPanel.setVisibility(View.VISIBLE);
                 ((TextView)findViewById(R.id.mediaName)).setText(name);
@@ -140,21 +135,37 @@ public class MediaViewerActivity extends AppCompatActivity {
     private void rotateCurrent() {
         if(!(mime.startsWith("image/") || mime.startsWith("video/"))) { notifyUser("Rotation is available for images and videos"); return; }
         mediaRotation=(mediaRotation+90f)%360f;
-        View target=mime.startsWith("video/") ? video : image;
-        target.animate().rotation(mediaRotation).setDuration(220).start();
+        if(mime.startsWith("video/")) applyVideoTransform();
+        else image.animate().rotation(mediaRotation).setDuration(220).start();
     }
 
-    private void centerVideo(int videoWidth, int videoHeight) {
-        if(videoWidth<=0 || videoHeight<=0) return;
-        video.post(()->{
-            int maxW=video.getWidth(), maxH=video.getHeight();
-            if(maxW<=0 || maxH<=0) return;
-            float scale=Math.min((float)maxW/videoWidth,(float)maxH/videoHeight);
-            int w=Math.max(1,Math.round(videoWidth*scale));
-            int h=Math.max(1,Math.round(videoHeight*scale));
-            FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(w,h,Gravity.CENTER);
-            video.setLayoutParams(lp);
-        });
+    private void prepareVideo(Surface surface) {
+        releasePlayback();
+        try {
+            player=new MediaPlayer();
+            player.setDataSource(this,uri);
+            player.setSurface(surface);
+            player.setOnPreparedListener(mp->{ applyVideoTransform(); mp.start(); });
+            player.setOnErrorListener((mp,what,extra)->{ notifyUser("Could not play this video"); return true; });
+            player.prepareAsync();
+        } catch(Exception e) { notifyUser("Could not play this video"); }
+    }
+
+    private void applyVideoTransform() {
+        if(!video.isAvailable() || player==null) return;
+        int vw=player.getVideoWidth(), vh=player.getVideoHeight();
+        int tw=video.getWidth(), th=video.getHeight();
+        if(vw<=0 || vh<=0 || tw<=0 || th<=0) return;
+        float scale=Math.min((float)tw/vw,(float)th/vh);
+        float cw=vw*scale, ch=vh*scale;
+        float rw=(mediaRotation%180f==0f)?cw:ch;
+        float rh=(mediaRotation%180f==0f)?ch:cw;
+        float fit=Math.min((float)tw/rw,(float)th/rh);
+        Matrix m=new Matrix();
+        m.postScale(fit,fit,tw/2f,th/2f);
+        m.postScale(scale,scale,tw/2f,th/2f);
+        m.postRotate(mediaRotation,tw/2f,th/2f);
+        video.setTransform(m);
     }
 
     private void openPdf() {
@@ -243,7 +254,7 @@ public class MediaViewerActivity extends AppCompatActivity {
 
     private void releasePlayback() {
         if(player!=null){ player.release(); player=null; }
-        if(video!=null) video.stopPlayback();
+        
     }
 
     private void closePdf() {
