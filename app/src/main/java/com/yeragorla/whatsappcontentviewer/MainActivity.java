@@ -205,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void delete(Item it) {
-        new AlertDialog.Builder(this).setTitle("Delete").setMessage("Delete ""+it.name()+""? This cannot be undone.")
+        new AlertDialog.Builder(this).setTitle("Delete").setMessage("Delete \"" + it.name() + "\"? This cannot be undone.")
             .setPositiveButton("Delete",(d,w)->{ boolean ok=deleteRecursive(it); toast(ok?"Deleted":"Delete failed"); refresh(); })
             .setNegativeButton("Cancel",null).show();
     }
