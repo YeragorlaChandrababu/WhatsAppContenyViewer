@@ -8,6 +8,7 @@ import android.os.*;
 import android.provider.Settings;
 import android.view.*;
 import android.widget.*;
+import android.graphics.Typeface;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 import androidx.documentfile.provider.DocumentFile;
@@ -179,14 +180,18 @@ public class MainActivity extends AppCompatActivity {
             pathText.setText(storageLabel + "  •  " + currentFileDir.getAbsolutePath());
         }
         renderBreadcrumbs();
-        ArrayAdapter<Item> adapter=new ArrayAdapter<Item>(this,android.R.layout.simple_list_item_1,items) {
+        ArrayAdapter<Item> adapter=new ArrayAdapter<Item>(this,0,items) {
             @Override public View getView(int position,View convert,android.view.ViewGroup parent) {
-                TextView t=(TextView)super.getView(position,convert,parent);
+                View row=convert;
+                if(row==null) row=getLayoutInflater().inflate(R.layout.item_file,parent,false);
                 Item it=getItem(position);
-                t.setText((it.isDir() ? "📁  " : icon(it.name())) + it.name() +
-                        (it.isDir() ? "" : "    " + size(it.length())));
-                t.setTextSize(16); t.setGravity(Gravity.CENTER_VERTICAL); t.setPadding(18,8,12,8);
-                return t;
+                TextView itemIcon=row.findViewById(R.id.itemIcon);
+                TextView itemName=row.findViewById(R.id.itemName);
+                TextView itemMeta=row.findViewById(R.id.itemMeta);
+                itemIcon.setText(it.isDir() ? "▣" : icon(it.name()));
+                itemName.setText(it.name());
+                itemMeta.setText(it.isDir() ? "Folder" : size(it.length()));
+                return row;
             }
         };
         fileList.setAdapter(adapter);
