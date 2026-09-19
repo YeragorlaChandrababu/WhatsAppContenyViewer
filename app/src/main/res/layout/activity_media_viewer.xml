@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#101116">
+    <ImageView android:id="@+id/imageView" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:visibility="gone" android:contentDescription="Media preview"/>
+    <VideoView android:id="@+id/videoView" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
+    <LinearLayout android:id="@+id/audioPanel" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:orientation="vertical" android:visibility="gone">
+        <TextView android:text="♪" android:textSize="72sp" android:textColor="#FFFFFF" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <TextView android:id="@+id/mediaName" android:textColor="#FFFFFF" android:textSize="18sp" android:gravity="center" android:padding="20dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+        <Button android:id="@+id/audioButton" android:text="Play" android:textAllCaps="false" android:layout_width="140dp" android:layout_height="wrap_content"/>
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="64dp" android:gravity="center_vertical" android:paddingStart="12dp" android:paddingEnd="12dp" android:background="#AA101116">
+        <ImageButton android:id="@+id/closeButton" android:src="@android:drawable/ic_menu_close_clear_cancel" android:tint="#FFFFFF" android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="Close" android:layout_width="48dp" android:layout_height="48dp"/>
+        <TextView android:id="@+id/titleText" android:textColor="#FFFFFF" android:textSize="16sp" android:maxLines="1" android:ellipsize="middle" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:paddingStart="12dp"/>
+        <ImageButton android:id="@+id/openOtherButton" android:src="@android:drawable/ic_menu_share" android:tint="#FFFFFF" android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="Open with another app" android:layout_width="48dp" android:layout_height="48dp"/>
+    </LinearLayout>
+</FrameLayout>
