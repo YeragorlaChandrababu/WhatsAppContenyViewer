@@ -29,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean clipboardCut = false;
     private boolean pickingDualStorage = false;
     private String storageLabel = "Internal Storage";
+    private boolean dualProfileMode = false;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -77,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void openInternal() {
         documentMode = false; documentRootUri = null;
+        dualProfileMode = false;
         storageLabel = "Internal Storage";
         currentFileDir = Environment.getExternalStorageDirectory();
         currentDocDir = null;
@@ -102,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
             if (probe != null) {
                 documentMode = false;
                 documentRootUri = null;
+                dualProfileMode = true;
                 currentFileDir = dualRoot;
                 currentDocDir = null;
                 storageLabel = "Dual Apps (user 999)";
@@ -121,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
                 DocumentFile root = DocumentFile.fromTreeUri(this, u);
                 if (root != null && root.canRead()) {
                     documentMode = true; documentRootUri = u; currentDocDir = root; currentFileDir = null;
+                    dualProfileMode = false;
                     storageLabel = "Dual Apps"; refresh(); return;
                 }
             } catch (Exception ignored) {}
@@ -143,6 +147,7 @@ public class MainActivity extends AppCompatActivity {
             try { getContentResolver().takePersistableUriPermission(u, data.getFlags() &
                     (Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION)); } catch(Exception ignored){}
             documentMode=true; documentRootUri=u; currentDocDir=DocumentFile.fromTreeUri(this,u); currentFileDir=null;
+            dualProfileMode = false;
             if (pickingDualStorage) {
                 getSharedPreferences("storage", MODE_PRIVATE).edit().putString("dual_tree_uri", u.toString()).apply();
                 storageLabel = "Dual Apps";
@@ -216,6 +221,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void openItem(Item it) {
         if(it.isDir()) { if(documentMode) currentDocDir=it.doc; else currentFileDir=it.file; refresh(); return; }
+        if (dualProfileMode && !documentMode) {
+            openDualFileWithProvider(it.file, false);
+            return;
+        }
         try {
             Uri u;
             if(documentMode) u=it.doc.getUri();
@@ -226,6 +235,36 @@ public class MainActivity extends AppCompatActivity {
             i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             startActivity(i);
         } catch(Exception e) { toast("No app can open this file"); }
+    }
+
+    private void openDualFileWithProvider(File source, boolean share) {
+        new Thread(() -> {
+            try {
+                File dir = new File(getCacheDir(), "dual-share");
+                if (!dir.exists() && !dir.mkdirs()) throw new IOException("Cannot create cache");
+                String safe = source.getName().replaceAll("[^A-Za-z0-9._-]", "_");
+                File cached = new File(dir, System.currentTimeMillis() + "_" + safe);
+                copyFile(source, cached);
+                Uri u = FileProvider.getUriForFile(this, getPackageName()+".fileprovider", cached);
+                runOnUiThread(() -> {
+                    Intent i;
+                    if (share) {
+                        i = new Intent(Intent.ACTION_SEND);
+                        i.setType(guessMime(source.getName()));
+                        i.putExtra(Intent.EXTRA_STREAM, u);
+                        i.setClipData(ClipData.newRawUri("file", u));
+                        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(Intent.createChooser(i, "Share file"));
+                    } else {
+                        i = new Intent(Intent.ACTION_VIEW);
+                        i.setDataAndType(u, guessMime(source.getName()));
+                        i.setClipData(ClipData.newRawUri("file", u));
+                        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        try { startActivity(i); } catch(Exception e) { toast("No app can open this file type"); }
+                    }
+                });
+            } catch(Exception e) { runOnUiThread(() -> toast("Could not prepare file: " + e.getMessage())); }
+        }).start();
     }
 
     private void showActions(Item it) {
@@ -264,10 +303,14 @@ public class MainActivity extends AppCompatActivity {
     private void deleteFile(File f) { if(f.isDirectory()){File[] c=f.listFiles();if(c!=null)for(File x:c)deleteFile(x);} f.delete(); }
 
     private void share(Item it) {
+        if (dualProfileMode && !documentMode) {
+            openDualFileWithProvider(it.file, true);
+            return;
+        }
         try {
             Uri u=documentMode?it.doc.getUri():FileProvider.getUriForFile(this,getPackageName()+".fileprovider",it.file);
             Intent i=new Intent(Intent.ACTION_SEND); i.setType(documentMode?(getContentResolver().getType(u)!=null?getContentResolver().getType(u):"*/*"):guessMime(it.name()));
-            i.putExtra(Intent.EXTRA_STREAM,u); i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); startActivity(Intent.createChooser(i,"Share file"));
+            i.putExtra(Intent.EXTRA_STREAM,u); i.setClipData(ClipData.newRawUri("file", u)); i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); startActivity(Intent.createChooser(i,"Share file"));
         } catch(Exception e){toast("Share failed");}
     }
 
