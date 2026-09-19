@@ -1,46 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="?android:colorBackground">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp">
-
-        <TextView
-            android:id="@+id/title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="WhatsApp Content Viewer"
-            android:textSize="26sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/status"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Share an image, video, or document from WhatsApp to this app."
-            android:textSize="16sp" />
-
-        <ImageView
-            android:id="@+id/imageView"
-            android:layout_width="match_parent"
-            android:layout_height="320dp"
-            android:layout_marginTop="20dp"
-            android:adjustViewBounds="true"
-            android:scaleType="fitCenter"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/details"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:textSize="14sp" />
-
+    <LinearLayout android:layout_width="match_parent" android:layout_height="64dp"
+        android:paddingStart="16dp" android:paddingEnd="8dp" android:gravity="center_vertical">
+        <TextView android:id="@+id/title" android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:text="Storage Explorer" android:textSize="22sp" android:textStyle="bold"/>
+        <ImageButton android:id="@+id/addStorage" android:layout_width="48dp" android:layout_height="48dp"
+            android:src="@android:drawable/ic_input_add" android:contentDescription="Add storage location"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
     </LinearLayout>
-</ScrollView>
+
+    <HorizontalScrollView android:layout_width="match_parent" android:layout_height="48dp"
+        android:scrollbars="none" android:paddingStart="12dp" android:paddingEnd="12dp">
+        <LinearLayout android:id="@+id/breadcrumbs" android:layout_width="wrap_content" android:layout_height="match_parent"
+            android:gravity="center_vertical" android:orientation="horizontal"/>
+    </HorizontalScrollView>
+
+    <LinearLayout android:id="@+id/storageBar" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:padding="8dp">
+        <Button android:id="@+id/internalStorage" android:layout_width="0dp" android:layout_height="44dp"
+            android:layout_weight="1" android:text="📱 Internal"/>
+        <Button android:id="@+id/dualStorage" android:layout_width="0dp" android:layout_height="44dp"
+            android:layout_weight="1" android:text="◉ Dual Apps"/>
+    </LinearLayout>
+
+    <TextView android:id="@+id/pathText" android:layout_width="match_parent" android:layout_height="36dp"
+        android:paddingStart="16dp" android:paddingEnd="16dp" android:gravity="center_vertical"
+        android:textSize="13sp" android:ellipsize="middle" android:maxLines="1"/>
+
+    <ListView android:id="@+id/fileList" android:layout_width="match_parent" android:layout_height="0dp"
+        android:layout_weight="1" android:dividerHeight="1dp"/>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="64dp"
+        android:gravity="center_vertical" android:padding="8dp">
+        <Button android:id="@+id/newFolder" android:layout_width="0dp" android:layout_height="48dp"
+            android:layout_weight="1" android:text="📁 New folder"/>
+        <Button android:id="@+id/newFile" android:layout_width="0dp" android:layout_height="48dp"
+            android:layout_weight="1" android:text="＋ New file"/>
+        <Button android:id="@+id/pasteButton" android:layout_width="0dp" android:layout_height="48dp"
+            android:layout_weight="0.8" android:text="📋 Paste"/>
+    </LinearLayout>
+</LinearLayout>
