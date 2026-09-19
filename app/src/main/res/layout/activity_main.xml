@@ -20,19 +20,32 @@
             <Button android:id="@+id/catDocuments" android:layout_width="110dp" android:layout_height="52dp" android:text="Documents" android:textAllCaps="false"/>
         </LinearLayout>
     </HorizontalScrollView>
-    <LinearLayout android:id="@+id/storageBar" android:layout_width="match_parent" android:layout_height="72dp" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" android:paddingStart="16dp" android:paddingEnd="16dp" android:gravity="center_vertical" android:background="@drawable/bg_surface">
+    <LinearLayout android:id="@+id/storageSummaryCard" android:layout_width="match_parent" android:layout_height="72dp" android:layout_marginStart="16dp" android:layout_marginEnd="16dp" android:paddingStart="16dp" android:paddingEnd="16dp" android:gravity="center_vertical" android:background="@drawable/bg_surface">
         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
-            <TextView android:text="Internal storage" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/textPrimary"/>
-            <TextView android:id="@+id/storageSummary" android:text="Calculating…" android:textSize="12sp" android:textColor="@color/textSecondary"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Internal storage" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/textPrimary"/>
+            <TextView android:id="@+id/storageSummary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Calculating…" android:textSize="12sp" android:textColor="@color/textSecondary"/>
         </LinearLayout>
         <TextView android:id="@+id/storageUsage" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Storage" android:textSize="12sp" android:textColor="@color/primary"/>
     </LinearLayout>
-    <HorizontalScrollView android:layout_width="match_parent" android:layout_height="50dp" android:scrollbars="none" android:paddingStart="12dp" android:paddingEnd="12dp"><LinearLayout android:id="@+id/breadcrumbs" android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center_vertical" android:orientation="horizontal"/></HorizontalScrollView>
-    <LinearLayout android:id="@+id/storageBar" android:layout_width="match_parent" android:layout_height="60dp" android:orientation="horizontal" android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingTop="6dp" android:paddingBottom="6dp">
-        <Button android:id="@+id/internalStorage" android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1" android:text="Internal" android:textAllCaps="false" android:textSize="14sp"/><Space android:layout_width="8dp" android:layout_height="1dp"/><Button android:id="@+id/dualStorage" android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1" android:text="Dual Apps" android:textAllCaps="false" android:textSize="14sp"/>
+    <HorizontalScrollView android:layout_width="match_parent" android:layout_height="50dp" android:scrollbars="none" android:paddingStart="12dp" android:paddingEnd="12dp">
+        <LinearLayout android:id="@+id/breadcrumbs" android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center_vertical" android:orientation="horizontal"/>
+    </HorizontalScrollView>
+    <LinearLayout android:id="@+id/storageLocations" android:layout_width="match_parent" android:layout_height="60dp" android:orientation="horizontal" android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingTop="6dp" android:paddingBottom="6dp">
+        <Button android:id="@+id/internalStorage" android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1" android:text="Internal" android:textAllCaps="false" android:textSize="14sp"/>
+        <Space android:layout_width="8dp" android:layout_height="1dp"/>
+        <Button android:id="@+id/dualStorage" android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1" android:text="Dual Apps" android:textAllCaps="false" android:textSize="14sp"/>
     </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="42dp" android:paddingStart="16dp" android:paddingEnd="16dp" android:gravity="center_vertical"><TextView android:id="@+id/resultCount" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="0 items" android:textSize="12sp" android:textColor="@color/textSecondary"/><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Browse" android:textSize="12sp" android:textStyle="bold" android:textColor="@color/primary"/></LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="42dp" android:paddingStart="16dp" android:paddingEnd="16dp" android:gravity="center_vertical">
+        <TextView android:id="@+id/resultCount" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="0 items" android:textSize="12sp" android:textColor="@color/textSecondary"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Browse" android:textSize="12sp" android:textStyle="bold" android:textColor="@color/primary"/>
+    </LinearLayout>
     <TextView android:id="@+id/pathText" android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginStart="12dp" android:layout_marginEnd="12dp" android:paddingStart="14dp" android:paddingEnd="14dp" android:gravity="center_vertical" android:textSize="12sp" android:textColor="@color/textSecondary" android:background="@drawable/bg_surface" android:ellipsize="middle" android:maxLines="1"/>
     <ListView android:id="@+id/fileList" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="8dp" android:divider="@color/divider" android:dividerHeight="1dp" android:clipToPadding="false" android:paddingTop="4dp" android:paddingBottom="4dp"/>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="72dp" android:gravity="center_vertical" android:paddingStart="12dp" android:paddingEnd="12dp"><Button android:id="@+id/newFolder" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:text="New folder" android:textAllCaps="false"/><Space android:layout_width="8dp" android:layout_height="1dp"/><Button android:id="@+id/newFile" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:text="New file" android:textAllCaps="false"/><Space android:layout_width="8dp" android:layout_height="1dp"/><Button android:id="@+id/pasteButton" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="0.8" android:text="Paste" android:textAllCaps="false"/></LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="72dp" android:gravity="center_vertical" android:paddingStart="12dp" android:paddingEnd="12dp">
+        <Button android:id="@+id/newFolder" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:text="New folder" android:textAllCaps="false"/>
+        <Space android:layout_width="8dp" android:layout_height="1dp"/>
+        <Button android:id="@+id/newFile" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:text="New file" android:textAllCaps="false"/>
+        <Space android:layout_width="8dp" android:layout_height="1dp"/>
+        <Button android:id="@+id/pasteButton" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="0.8" android:text="Paste" android:textAllCaps="false"/>
+    </LinearLayout>
 </LinearLayout>
