@@ -226,20 +226,21 @@ public class MainActivity extends AppCompatActivity {
 
     private void openItem(Item it) {
         if(it.isDir()) { if(documentMode) currentDocDir=it.doc; else currentFileDir=it.file; refresh(); return; }
-        if (dualProfileMode && !documentMode) {
-            openDualFileWithProvider(it.file, false);
-            return;
-        }
+        if (dualProfileMode && !documentMode) { openDualFileWithProvider(it.file, false); return; }
         try {
-            Uri u;
-            if(documentMode) u=it.doc.getUri();
-            else u=FileProvider.getUriForFile(this,getPackageName()+".fileprovider",it.file);
-            Intent i=new Intent(Intent.ACTION_VIEW,u);
-            String mime=documentMode ? getContentResolver().getType(u) : guessMime(it.name());
-            if(mime!=null) i.setDataAndType(u,mime); else i.setDataAndType(u,"*/*");
-            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(i);
-        } catch(Exception e) { toast("No app can open this file"); }
+            Uri u = documentMode ? it.doc.getUri() : FileProvider.getUriForFile(this,getPackageName()+".fileprovider",it.file);
+            String mime = documentMode ? getContentResolver().getType(u) : guessMime(it.name());
+            if (mime == null) mime = "*/*";
+            if (mime.startsWith("image/") || mime.startsWith("video/") || mime.startsWith("audio/")) {
+                Intent viewer = new Intent(this, MediaViewerActivity.class);
+                viewer.putExtra("media_uri", u); viewer.putExtra("media_mime", mime); viewer.putExtra("media_name", it.name());
+                viewer.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); viewer.setClipData(ClipData.newRawUri("media", u));
+                startActivity(viewer);
+            } else {
+                Intent i=new Intent(Intent.ACTION_VIEW,u); i.setDataAndType(u,mime); i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                i.setClipData(ClipData.newRawUri("file",u)); startActivity(Intent.createChooser(i,"Open with another app"));
+            }
+        } catch(Exception e) { toast("No compatible app can open this file"); }
     }
 
     private void openDualFileWithProvider(File source, boolean share) {
@@ -261,11 +262,11 @@ public class MainActivity extends AppCompatActivity {
                         i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                         startActivity(Intent.createChooser(i, "Share file"));
                     } else {
-                        i = new Intent(Intent.ACTION_VIEW);
-                        i.setDataAndType(u, guessMime(source.getName()));
-                        i.setClipData(ClipData.newRawUri("file", u));
-                        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        try { startActivity(i); } catch(Exception e) { toast("No app can open this file type"); }
+                        String mime = guessMime(source.getName());
+                        Intent viewer = new Intent(this, MediaViewerActivity.class);
+                        viewer.putExtra("media_uri", u); viewer.putExtra("media_mime", mime); viewer.putExtra("media_name", source.getName());
+                        viewer.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); viewer.setClipData(ClipData.newRawUri("media", u));
+                        try { startActivity(viewer); } catch(Exception e) { toast("Could not open media"); }
                     }
                 });
             } catch(Exception e) { runOnUiThread(() -> toast("Could not prepare file: " + e.getMessage())); }
