@@ -30,7 +30,7 @@ public class MediaViewerActivity extends AppCompatActivity {
     private LinearLayout audioPanel, pdfPanel;
     private ImageView pdfPage;
     private TextView pageText, titleText;
-    private Button prevButton, nextButton;
+    private ImageButton prevButton, nextButton;
     private PdfRenderer pdfRenderer;
     private PdfRenderer.Page pdfPageRenderer;
     private ParcelFileDescriptor pdfFd;
