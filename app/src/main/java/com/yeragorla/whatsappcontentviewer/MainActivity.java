@@ -207,10 +207,10 @@ public class MainActivity extends AppCompatActivity {
                 View row=convert;
                 if(row==null) row=getLayoutInflater().inflate(R.layout.item_file,parent,false);
                 Item it=getItem(position);
-                TextView itemIcon=row.findViewById(R.id.itemIcon);
+                ImageView itemIcon=row.findViewById(R.id.itemIcon);
                 TextView itemName=row.findViewById(R.id.itemName);
                 TextView itemMeta=row.findViewById(R.id.itemMeta);
-                itemIcon.setText(it.isDir() ? "▣" : icon(it.name()));
+                itemIcon.setImageResource(it.isDir() ? R.drawable.ic_folder : iconRes(it.name()));
                 itemName.setText(it.name());
                 itemMeta.setText(it.isDir() ? "Folder" : size(it.length()));
                 return row;
@@ -250,17 +250,27 @@ public class MainActivity extends AppCompatActivity {
         if(it.isDir()) { if(documentMode) currentDocDir=it.doc; else currentFileDir=it.file; refresh(); return; }
         if (dualProfileMode && !documentMode) { openDualFileWithProvider(it.file, false); return; }
         try {
-            Uri u = documentMode ? it.doc.getUri() : Uri.fromFile(it.file);
+            Uri u = documentMode ? it.doc.getUri() : FileProvider.getUriForFile(this,getPackageName()+".fileprovider",it.file);
             String mime = documentMode ? getContentResolver().getType(u) : guessMime(it.name());
+            if (mime == null || mime.equals("*/*")) {
+                String detected = getContentResolver().getType(u);
+                if (detected != null) mime = detected;
+            }
             if (mime == null) mime = "*/*";
             if (mime.startsWith("image/") || mime.startsWith("video/") || mime.startsWith("audio/")) {
                 Intent viewer = new Intent(this, MediaViewerActivity.class);
-                viewer.putExtra("media_uri", u); viewer.putExtra("media_mime", mime); viewer.putExtra("media_name", it.name());
-                viewer.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); viewer.setClipData(ClipData.newRawUri("media", u));
+                viewer.putExtra("media_uri", u);
+                viewer.putExtra("media_mime", mime);
+                viewer.putExtra("media_name", it.name());
+                viewer.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                viewer.setClipData(ClipData.newRawUri("media", u));
                 startActivity(viewer);
             } else {
-                Intent i=new Intent(Intent.ACTION_VIEW,u); i.setDataAndType(u,mime); i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                i.setClipData(ClipData.newRawUri("file",u)); startActivity(Intent.createChooser(i,"Open with another app"));
+                Intent i=new Intent(Intent.ACTION_VIEW,u);
+                i.setDataAndType(u,mime);
+                i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                i.setClipData(ClipData.newRawUri("file",u));
+                startActivity(Intent.createChooser(i,"Open with another app"));
             }
         } catch(Exception e) { toast("No compatible app can open this file"); }
     }
@@ -402,11 +412,16 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private String icon(String n) {
-        String m=guessMime(n); if(m.startsWith("image/"))return "🖼️  "; if(m.startsWith("video/"))return "🎬  ";
-        if(m.startsWith("audio/"))return "🎵  "; if(m.equals("application/pdf"))return "📕  ";
-        if(m.startsWith("text/"))return "📄  "; return "📦  ";
+    private int iconRes(String n) {
+        String m=guessMime(n);
+        if(m.startsWith("image/")) return R.drawable.ic_image;
+        if(m.startsWith("video/")) return R.drawable.ic_video;
+        if(m.startsWith("audio/")) return R.drawable.ic_audio;
+        if(m.equals("application/pdf")) return R.drawable.ic_pdf;
+        if(m.startsWith("text/")) return R.drawable.ic_file;
+        return R.drawable.ic_archive;
     }
+
     private String guessMime(String n) {
         String x=n.toLowerCase(Locale.US);
         if(x.endsWith(".jpg")||x.endsWith(".jpeg"))return "image/jpeg"; if(x.endsWith(".png"))return "image/png"; if(x.endsWith(".webp"))return "image/webp";
