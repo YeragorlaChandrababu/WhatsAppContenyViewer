@@ -171,15 +171,13 @@ public class MediaViewerActivity extends AppCompatActivity {
         int vw=player.getVideoWidth(), vh=player.getVideoHeight();
         int tw=video.getWidth(), th=video.getHeight();
         if(vw<=0 || vh<=0 || tw<=0 || th<=0) return;
+        // Fit the video's natural aspect ratio inside the available viewer area.
+        // Rotation changes orientation, but never stretches the original frame.
         float scale=Math.min((float)tw/vw,(float)th/vh);
         float cw=vw*scale, ch=vh*scale;
-        float rw=(mediaRotation%180f==0f)?cw:ch;
-        float rh=(mediaRotation%180f==0f)?ch:cw;
-        float fit=Math.min((float)tw/rw,(float)th/rh);
         Matrix m=new Matrix();
-        m.postScale(fit,fit,tw/2f,th/2f);
-        m.postScale(scale,scale,tw/2f,th/2f);
-        m.postRotate(mediaRotation,tw/2f,th/2f);
+        m.setScale(scale, scale, tw / 2f, th / 2f);
+        m.postRotate(mediaRotation, tw / 2f, th / 2f);
         video.setTransform(m);
     }
 
