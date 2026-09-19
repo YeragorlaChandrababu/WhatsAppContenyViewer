@@ -60,7 +60,15 @@ public class MediaViewerActivity extends AppCompatActivity {
 
     private void openWithOtherApp(){
         try{
-            Intent i=new Intent(Intent.ACTION_VIEW,uri); i.setDataAndType(uri,mime==null?"*/*":mime); i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); i.setClipData(ClipData.newRawUri("media",uri));
+            Uri shareUri = uri;
+            if ("file".equalsIgnoreCase(uri.getScheme())) {
+                File file = new File(uri.getPath());
+                shareUri = FileProvider.getUriForFile(this, getPackageName()+".fileprovider", file);
+            }
+            Intent i=new Intent(Intent.ACTION_VIEW,shareUri);
+            i.setDataAndType(shareUri,mime==null?"*/*":mime);
+            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            i.setClipData(ClipData.newRawUri("media",shareUri));
             startActivity(Intent.createChooser(i,"Open with another app"));
         }catch(Exception e){toast("No compatible app found");}
     }
