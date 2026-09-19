@@ -82,24 +82,32 @@ public class MediaViewerActivity extends AppCompatActivity {
         titleText.setText(name);
         image.setVisibility(View.GONE); video.setVisibility(View.GONE); audioPanel.setVisibility(View.GONE); pdfPanel.setVisibility(View.GONE);
 
-        if(mime.startsWith("image/")) {
-            image.setVisibility(View.VISIBLE);
-            try { image.setImageURI(uri); } catch (RuntimeException e) { notifyUser("Could not load image"); }
-        } else if(mime.startsWith("video/")) {
-            video.setVisibility(View.VISIBLE);
-            video.setMediaController(new MediaController(this));
-            video.setVideoURI(uri);
-            video.requestFocus();
-            video.setOnPreparedListener(mp->video.start());
-        } else if(mime.startsWith("audio/")) {
-            audioPanel.setVisibility(View.VISIBLE);
-            ((TextView)findViewById(R.id.mediaName)).setText(name);
-            findViewById(R.id.audioButton).setOnClickListener(v->toggleAudio());
-        } else if(mime.equals("application/pdf") || name.toLowerCase(Locale.US).endsWith(".pdf")) {
-            pdfPanel.setVisibility(View.VISIBLE);
-            openPdf();
-        } else {
-            notifyUser("This format is not supported in the viewer");
+        try {
+            if(mime.startsWith("image/")) {
+                image.setVisibility(View.VISIBLE);
+                try { image.setImageURI(uri); } catch (RuntimeException e) { notifyUser("Could not load image"); }
+            } else if(mime.startsWith("video/")) {
+                video.setVisibility(View.VISIBLE);
+                video.setMediaController(new MediaController(this));
+                video.setVideoURI(uri);
+                video.requestFocus();
+                video.setOnPreparedListener(mp->video.start());
+            } else if(mime.startsWith("audio/")) {
+                audioPanel.setVisibility(View.VISIBLE);
+                ((TextView)findViewById(R.id.mediaName)).setText(name);
+                findViewById(R.id.audioButton).setOnClickListener(v->toggleAudio());
+            } else if(mime.equals("application/pdf") || name.toLowerCase(Locale.US).endsWith(".pdf")) {
+                pdfPanel.setVisibility(View.VISIBLE);
+                openPdf();
+            } else {
+                notifyUser("This format is not supported in the viewer");
+            }
+        } catch (Exception e) {
+            image.setVisibility(View.GONE);
+            video.setVisibility(View.GONE);
+            audioPanel.setVisibility(View.GONE);
+            pdfPanel.setVisibility(View.GONE);
+            notifyUser("Could not load this media");
         }
         updateNavigation();
     }
