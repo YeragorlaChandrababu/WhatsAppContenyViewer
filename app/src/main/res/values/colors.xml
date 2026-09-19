@@ -7,4 +7,5 @@
     <color name="textSecondary">#737681</color>
     <color name="divider">#E7E8ED</color>
     <color name="accent">#5B5BD6</color>
+    <color name="error">#D64545</color>
 </resources>
