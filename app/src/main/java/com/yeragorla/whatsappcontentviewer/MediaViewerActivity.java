@@ -31,7 +31,27 @@ public class MediaViewerActivity extends AppCompatActivity {
     private ImageView image;
     private LinearLayout audioPanel, pdfPanel;
     private ImageView pdfPage;
-    private TextView pageText, titleText, countText;
+    private TextView pageText, titleText, countText, currentTimeText, durationText;
+    private ImageButton videoPlayButton;
+    private SeekBar videoSeekBar;
+    private final Handler controlHandler = new Handler(Looper.getMainLooper());
+    private final Runnable progressUpdater = new Runnable() {
+        @Override public void run() {
+            if (player != null && mime != null && mime.startsWith("video/")) {
+                try {
+                    int duration=player.getDuration();
+                    int position=player.getCurrentPosition();
+                    if(duration>0) {
+                        videoSeekBar.setMax(duration);
+                        videoSeekBar.setProgress(Math.min(position,duration));
+                        currentTimeText.setText(formatTime(position));
+                        durationText.setText(formatTime(duration));
+                    }
+                } catch (IllegalStateException ignored) {}
+                controlHandler.postDelayed(this,500);
+            }
+        }
+    };
     private float mediaRotation;
     private float downX, downY;
     private long downTime;
@@ -50,6 +70,23 @@ public class MediaViewerActivity extends AppCompatActivity {
         pageText=findViewById(R.id.pageText);
         titleText=findViewById(R.id.titleText);
         countText=findViewById(R.id.countText);
+        currentTimeText=findViewById(R.id.currentTimeText);
+        durationText=findViewById(R.id.durationText);
+        videoPlayButton=findViewById(R.id.videoPlayButton);
+        videoSeekBar=findViewById(R.id.videoSeekBar);
+
+        videoPlayButton.setOnClickListener(v->toggleVideoPlayback());
+        videoSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar bar,int progress,boolean fromUser) {
+                if(fromUser && currentTimeText!=null) currentTimeText.setText(formatTime(progress));
+            }
+            @Override public void onStartTrackingTouch(SeekBar bar) {}
+            @Override public void onStopTrackingTouch(SeekBar bar) {
+                if(player!=null) {
+                    try { player.seekTo(bar.getProgress()); } catch(IllegalStateException ignored) {}
+                }
+            }
+        });
 
         video.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
@@ -102,6 +139,7 @@ public class MediaViewerActivity extends AppCompatActivity {
         mediaRotation=0f;
         image.setRotation(0f);
         video.setRotation(0f);
+        resetVideoControls();
         image.setVisibility(View.GONE); video.setVisibility(View.GONE); audioPanel.setVisibility(View.GONE); pdfPanel.setVisibility(View.GONE);
 
         try {
@@ -110,6 +148,7 @@ public class MediaViewerActivity extends AppCompatActivity {
                 try { image.setImageURI(uri); } catch (RuntimeException e) { notifyUser("Could not load image"); }
             } else if(mime.startsWith("video/")) {
                 video.setVisibility(View.VISIBLE);
+                findViewById(R.id.videoControls).setVisibility(View.VISIBLE);
                 if(video.isAvailable()) prepareVideo(new Surface(video.getSurfaceTexture()));
             } else if(mime.startsWith("audio/")) {
                 audioPanel.setVisibility(View.VISIBLE);
@@ -160,7 +199,25 @@ public class MediaViewerActivity extends AppCompatActivity {
             player=new MediaPlayer();
             player.setDataSource(this,uri);
             player.setSurface(surface);
-            player.setOnPreparedListener(mp->{ applyVideoTransform(); mp.start(); });
+            player.setOnPreparedListener(mp->{
+                applyVideoTransform();
+                try {
+                    int duration=mp.getDuration();
+                    videoSeekBar.setMax(Math.max(0,duration));
+                    videoSeekBar.setProgress(0);
+                    currentTimeText.setText(formatTime(0));
+                    durationText.setText(formatTime(duration));
+                } catch (IllegalStateException ignored) {}
+                videoPlayButton.setImageResource(android.R.drawable.ic_media_pause);
+                mp.setOnCompletionListener(done->{
+                    videoPlayButton.setImageResource(android.R.drawable.ic_media_play);
+                    videoSeekBar.setProgress(videoSeekBar.getMax());
+                    currentTimeText.setText(durationText.getText());
+                });
+                mp.start();
+                controlHandler.removeCallbacks(progressUpdater);
+                controlHandler.post(progressUpdater);
+            });
             player.setOnErrorListener((mp,what,extra)->{ notifyUser("Could not play this video"); return true; });
             player.prepareAsync();
         } catch(Exception e) { notifyUser("Could not play this video"); }
@@ -172,28 +229,17 @@ public class MediaViewerActivity extends AppCompatActivity {
         int tw=video.getWidth(), th=video.getHeight();
         if(vw<=0 || vh<=0 || tw<=0 || th<=0) return;
 
-        // TextureView fills the available surface by default. Correct that
-        // fill to the video's natural aspect ratio, then rotate the rendered
-        // content. This keeps the video as large as possible without stretching.
+        // Use one uniform scale for the rendered frame. The rotated bounding
+        // box is used for the fit calculation so the video is always as large
+        // as possible without stretching or cropping.
         boolean quarterTurn=((int)mediaRotation % 180)!=0;
-        float videoAspect=quarterTurn
-                ? (float)vh / (float)vw
-                : (float)vw / (float)vh;
-        float viewAspect=(float)tw / (float)th;
-
-        float scaleX=1f;
-        float scaleY=1f;
-        if(videoAspect > viewAspect) {
-            // Video is relatively wider: reduce its displayed height.
-            scaleY=viewAspect / videoAspect;
-        } else {
-            // Video is relatively taller: reduce its displayed width.
-            scaleX=videoAspect / viewAspect;
-        }
+        float rotatedWidth=quarterTurn ? vh : vw;
+        float rotatedHeight=quarterTurn ? vw : vh;
+        float scale=Math.min((float)tw/rotatedWidth,(float)th/rotatedHeight);
 
         Matrix m=new Matrix();
-        m.setScale(scaleX, scaleY, tw / 2f, th / 2f);
-        m.postRotate(mediaRotation, tw / 2f, th / 2f);
+        m.setScale(scale,scale,tw/2f,th/2f);
+        m.postRotate(mediaRotation,tw/2f,th/2f);
         video.setTransform(m);
     }
 
@@ -281,9 +327,42 @@ public class MediaViewerActivity extends AppCompatActivity {
         } catch(Exception e) { notifyUser("No compatible app found"); }
     }
 
+    private void toggleVideoPlayback() {
+        if(player==null) return;
+        try {
+            if(player.isPlaying()) {
+                player.pause();
+                videoPlayButton.setImageResource(android.R.drawable.ic_media_play);
+            } else {
+                player.start();
+                videoPlayButton.setImageResource(android.R.drawable.ic_media_pause);
+                controlHandler.removeCallbacks(progressUpdater);
+                controlHandler.post(progressUpdater);
+            }
+        } catch(IllegalStateException ignored) {}
+    }
+
+    private void resetVideoControls() {
+        controlHandler.removeCallbacks(progressUpdater);
+        View controls=findViewById(R.id.videoControls);
+        if(controls!=null) controls.setVisibility(View.GONE);
+        if(videoSeekBar!=null) videoSeekBar.setProgress(0);
+        if(currentTimeText!=null) currentTimeText.setText(formatTime(0));
+        if(durationText!=null) durationText.setText(formatTime(0));
+        if(videoPlayButton!=null) videoPlayButton.setImageResource(android.R.drawable.ic_media_play);
+    }
+
+    private String formatTime(int milliseconds) {
+        int totalSeconds=Math.max(0,milliseconds)/1000;
+        int minutes=totalSeconds/60;
+        int seconds=totalSeconds%60;
+        return String.format(Locale.US,"%d:%02d",minutes,seconds);
+    }
+
     private void releasePlayback() {
+        controlHandler.removeCallbacks(progressUpdater);
         if(player!=null){ player.release(); player=null; }
-        
+        if(videoPlayButton!=null) videoPlayButton.setImageResource(android.R.drawable.ic_media_play);
     }
 
     private void closePdf() {
