@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.internalStorage).setOnClickListener(v -> openInternal());
         findViewById(R.id.dualStorage).setOnClickListener(v -> openDualApps());
         findViewById(R.id.addStorage).setOnClickListener(v -> pickStorage("Select a storage location"));
+        findViewById(R.id.themeButton).setOnClickListener(v -> showThemeChooser());
         findViewById(R.id.moreButton).setOnClickListener(v -> showMoreMenu(v));
         findViewById(R.id.newFolder).setOnClickListener(v -> createFolder());
         findViewById(R.id.newFile).setOnClickListener(v -> createFile());
@@ -252,6 +253,65 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         fileList.setAdapter(adapter);
+    }
+
+    private long lastModified(Item it) {
+        return it.file != null ? it.file.lastModified() : it.doc.lastModified();
+    }
+
+    private void updateStorageSummary() {
+        TextView summary=findViewById(R.id.storageSummary);
+        TextView usage=findViewById(R.id.storageUsage);
+        if(summary==null || usage==null) return;
+        File root=Environment.getExternalStorageDirectory();
+        long total=root.getTotalSpace(), free=root.getFreeSpace();
+        summary.setText(formatStorage(free)+" free of "+formatStorage(total));
+        usage.setText(total>0 ? Math.round(((total-free)*100f)/total)+"% used" : "Storage");
+    }
+
+    private String formatStorage(long bytes) {
+        double value=bytes;
+        String[] units={"B","KB","MB","GB","TB"};
+        int index=0;
+        while(value>=1024 && index<units.length-1){ value/=1024; index++; }
+        return String.format(Locale.US,"%.1f %s",value,units[index]);
+    }
+
+    private void openCategory(String directoryName) {
+        File dir=new File(Environment.getExternalStorageDirectory(),directoryName);
+        if(!dir.isDirectory()){ toast(directoryName+" is not available"); return; }
+        documentMode=false;
+        documentRootUri=null;
+        dualProfileMode=false;
+        storageLabel="Internal Storage";
+        currentFileDir=dir;
+        currentDocDir=null;
+        searchQuery="";
+        EditText search=findViewById(R.id.searchBox);
+        if(search!=null) search.setText("");
+        refresh();
+    }
+
+    private void showMoreMenu(View anchor) {
+        PopupMenu menu=new PopupMenu(this,anchor);
+        menu.getMenu().add("Sort by name");
+        menu.getMenu().add("Sort by date");
+        menu.getMenu().add("Sort by size");
+        menu.getMenu().add("Reverse order");
+        menu.getMenu().add("Refresh");
+        menu.getMenu().add("Theme");
+        menu.setOnMenuItemClickListener(item -> {
+            String title=item.getTitle().toString();
+            if(title.equals("Sort by name")) { sortMode=0; sortDescending=false; }
+            else if(title.equals("Sort by date")) { sortMode=1; sortDescending=false; }
+            else if(title.equals("Sort by size")) { sortMode=2; sortDescending=false; }
+            else if(title.equals("Reverse order")) { sortDescending=!sortDescending; }
+            else if(title.equals("Refresh")) { refresh(); return true; }
+            else if(title.equals("Theme")) { showThemeChooser(); return true; }
+            renderList();
+            return true;
+        });
+        menu.show();
     }
 
     private void renderBreadcrumbs() {
