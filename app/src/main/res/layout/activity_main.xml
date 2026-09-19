@@ -1,45 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:background="?android:colorBackground">
+    android:orientation="vertical" android:background="@color/surface">
 
-    <LinearLayout android:layout_width="match_parent" android:layout_height="64dp"
-        android:paddingStart="16dp" android:paddingEnd="8dp" android:gravity="center_vertical">
-        <TextView android:id="@+id/title" android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:text="Storage Explorer" android:textSize="22sp" android:textStyle="bold"/>
-        <ImageButton android:id="@+id/addStorage" android:layout_width="48dp" android:layout_height="48dp"
+    <LinearLayout android:layout_width="match_parent" android:layout_height="72dp"
+        android:paddingStart="20dp" android:paddingEnd="12dp" android:gravity="center_vertical">
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+            <TextView android:id="@+id/title" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Storage Explorer" android:textSize="22sp" android:textStyle="bold" android:textColor="@color/textPrimary"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Browse, manage and share files" android:textSize="12sp" android:textColor="@color/textSecondary"/>
+        </LinearLayout>
+        <ImageButton android:id="@+id/addStorage" android:layout_width="44dp" android:layout_height="44dp"
             android:src="@android:drawable/ic_input_add" android:contentDescription="Add storage location"
-            android:background="?attr/selectableItemBackgroundBorderless"/>
+            android:tint="@color/primary" android:background="?attr/selectableItemBackgroundBorderless"/>
     </LinearLayout>
 
-    <HorizontalScrollView android:layout_width="match_parent" android:layout_height="48dp"
-        android:scrollbars="none" android:paddingStart="12dp" android:paddingEnd="12dp">
+    <HorizontalScrollView android:layout_width="match_parent" android:layout_height="50dp" android:scrollbars="none"
+        android:paddingStart="12dp" android:paddingEnd="12dp">
         <LinearLayout android:id="@+id/breadcrumbs" android:layout_width="wrap_content" android:layout_height="match_parent"
             android:gravity="center_vertical" android:orientation="horizontal"/>
     </HorizontalScrollView>
 
-    <LinearLayout android:id="@+id/storageBar" android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:padding="8dp">
-        <Button android:id="@+id/internalStorage" android:layout_width="0dp" android:layout_height="44dp"
-            android:layout_weight="1" android:text="📱 Internal"/>
-        <Button android:id="@+id/dualStorage" android:layout_width="0dp" android:layout_height="44dp"
-            android:layout_weight="1" android:text="◉ Dual Apps"/>
+    <LinearLayout android:id="@+id/storageBar" android:layout_width="match_parent" android:layout_height="60dp"
+        android:orientation="horizontal" android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingTop="6dp" android:paddingBottom="6dp">
+        <Button android:id="@+id/internalStorage" android:layout_width="0dp" android:layout_height="48dp"
+            android:layout_weight="1" android:text="Internal" android:textAllCaps="false" android:textSize="14sp"/>
+        <Space android:layout_width="8dp" android:layout_height="1dp"/>
+        <Button android:id="@+id/dualStorage" android:layout_width="0dp" android:layout_height="48dp"
+            android:layout_weight="1" android:text="Dual Apps" android:textAllCaps="false" android:textSize="14sp"/>
     </LinearLayout>
 
-    <TextView android:id="@+id/pathText" android:layout_width="match_parent" android:layout_height="36dp"
-        android:paddingStart="16dp" android:paddingEnd="16dp" android:gravity="center_vertical"
-        android:textSize="13sp" android:ellipsize="middle" android:maxLines="1"/>
+    <TextView android:id="@+id/pathText" android:layout_width="match_parent" android:layout_height="42dp"
+        android:layout_marginStart="12dp" android:layout_marginEnd="12dp" android:paddingStart="14dp" android:paddingEnd="14dp"
+        android:gravity="center_vertical" android:textSize="12sp" android:textColor="@color/textSecondary"
+        android:background="@drawable/bg_surface" android:ellipsize="middle" android:maxLines="1"/>
 
     <ListView android:id="@+id/fileList" android:layout_width="match_parent" android:layout_height="0dp"
-        android:layout_weight="1" android:dividerHeight="1dp"/>
+        android:layout_weight="1" android:layout_marginTop="8dp" android:divider="@color/divider" android:dividerHeight="1dp"
+        android:clipToPadding="false" android:paddingTop="4dp" android:paddingBottom="4dp"/>
 
-    <LinearLayout android:layout_width="match_parent" android:layout_height="64dp"
-        android:gravity="center_vertical" android:padding="8dp">
-        <Button android:id="@+id/newFolder" android:layout_width="0dp" android:layout_height="48dp"
-            android:layout_weight="1" android:text="📁 New folder"/>
-        <Button android:id="@+id/newFile" android:layout_width="0dp" android:layout_height="48dp"
-            android:layout_weight="1" android:text="＋ New file"/>
-        <Button android:id="@+id/pasteButton" android:layout_width="0dp" android:layout_height="48dp"
-            android:layout_weight="0.8" android:text="📋 Paste"/>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="72dp" android:gravity="center_vertical"
+        android:paddingStart="12dp" android:paddingEnd="12dp">
+        <Button android:id="@+id/newFolder" android:layout_width="0dp" android:layout_height="50dp"
+            android:layout_weight="1" android:text="New folder" android:textAllCaps="false"/>
+        <Space android:layout_width="8dp" android:layout_height="1dp"/>
+        <Button android:id="@+id/newFile" android:layout_width="0dp" android:layout_height="50dp"
+            android:layout_weight="1" android:text="New file" android:textAllCaps="false"/>
+        <Space android:layout_width="8dp" android:layout_height="1dp"/>
+        <Button android:id="@+id/pasteButton" android:layout_width="0dp" android:layout_height="50dp"
+            android:layout_weight="0.8" android:text="Paste" android:textAllCaps="false"/>
     </LinearLayout>
 </LinearLayout>
